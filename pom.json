@@ -1,0 +1,42 @@
+{
+  "project": {
+    "@xmlns": "http://maven.apache.org/POM/4.0.0",
+    "@xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+    "@xsi:schemaLocation": "http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd",
+    "modelVersion": "4.0.0",
+    "groupId": "org.example",
+    "artifactId": "mavenproject",
+    "version": "1.0-SNAPSHOT",
+    "properties": {
+      "maven.compiler.source": "25",
+      "maven.compiler.target": "25",
+      "project.build.sourceEncoding": "UTF-8"
+    },
+    "dependencies": {
+      "dependency": [
+        {
+          "groupId": "org.testng",
+          "artifactId": "testng",
+          "version": "7.10.2",
+          "scope": "test"
+        }
+      ]
+    },
+    "build": {
+      "plugins": {
+        "plugin": [
+          {
+            "groupId": "org.apache.maven.plugins",
+            "artifactId": "maven-surefire-plugin",
+            "version": "3.5.6",
+            "configuration": {
+              "suiteXmlFiles": {
+                "suiteXmlFile": "src/test/resources/testng.xml"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}
