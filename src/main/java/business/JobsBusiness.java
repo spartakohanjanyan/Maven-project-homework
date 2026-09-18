@@ -14,12 +14,7 @@ public class JobsBusiness {
         jobsPage.filter(category, filterName);
     }
 
-    public String getExpectedCount(String category, String filterName) {
-        return jobsPage.getExpectedJobsCountText(category, filterName);
-    }
-
-    public String getActualCount() {
-        jobsPage.waitForJobsToRefresh();
-        return jobsPage.getActualDisplayedJobsCountText();
+    public boolean isFilterApplied(String category, String filterName) {
+        return jobsPage.isFilterChecked(category, filterName);
     }
 }

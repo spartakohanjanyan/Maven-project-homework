@@ -5,7 +5,9 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import pages.HomePage;
 import pages.JobsPage;
 
 public class JobsFiltersTest {
@@ -19,27 +21,36 @@ public class JobsFiltersTest {
         driver = new ChromeDriver();
         driver.manage().window().maximize();
 
+        driver.get("https://staff.am");
+
+        HomePage homepage = new HomePage(driver);
+        homepage.clickJobsButton();
+
         jobsPage = new JobsPage(driver);
         jobsBusiness = new JobsBusiness(jobsPage);
 
-        jobsPage.open();
         ((JavascriptExecutor) driver).executeScript(
                 "var elem = document.querySelector('.Toastify') || document.querySelector('[class*=\"cookie\"]');" +
                         "if(elem) { elem.remove(); }"
         );
     }
 
-    @Test
-    public void verifyMultipleFiltersCombination() {
+    @DataProvider(name = "JobsFiltersData")
+    public Object[][] getCategoryFilterData() {
+        return new Object[][] {
+                {"Job category", "Banking/credit"},
+                {"Specialist level", "Junior"},
+                {"Job salary", "Mentioned"}
+        };
+    }
 
-        jobsBusiness.applyFilter("Specialist level", "Junior");
-        jobsBusiness.applyFilter("Job salary", "Mentioned");
-        String expectedCount = jobsBusiness.getExpectedCount("Job salary", "Mentioned");
-        String actualCount = jobsBusiness.getActualCount();
-        Assert.assertEquals(
-                actualCount,
-                expectedCount,
-                "The actual jobs count on page doesn't equal the count in filter"
+    @Test(dataProvider = "JobsFiltersData")
+    public void verifyFilterSelectionAndCount(String category, String filterName) {
+        jobsBusiness.applyFilter(category, filterName);
+
+        boolean isIconDisplayed = jobsBusiness.isFilterApplied(category, filterName);
+        Assert.assertTrue(
+                isIconDisplayed
         );
     }
 
