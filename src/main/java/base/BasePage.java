@@ -81,7 +81,6 @@ public class BasePage {
         try {
             wait.until(ExpectedConditions.elementToBeClickable(cookieAcceptButton)).click();
         } catch (Exception e) {
-            return;
         }
     }
 }
