@@ -1,7 +1,6 @@
 package base;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
@@ -15,6 +14,8 @@ public class BasePage {
 
     protected WebDriver driver;
     protected WebDriverWait wait;
+    protected By cookieAcceptButton = (By.xpath("//div[contains(text(), 'We use cookies')]"));
+
 
     public BasePage(WebDriver driver) {
         this.driver = driver;
@@ -22,30 +23,65 @@ public class BasePage {
         PageFactory.initElements(driver, this);
     }
 
-    protected void click(By locator) {
-        scrollToElement(locator);
-        wait.until(ExpectedConditions.elementToBeClickable(locator)).click();
+    protected void clickWithScroll(By locator) {
+
+        WebElement element = wait.until(
+                ExpectedConditions.elementToBeClickable(locator)
+        );
+
+        scrollToElement(element);
+
+        Actions actions = new Actions(driver);
+
+        actions
+                .moveToElement(element)
+                .click()
+                .perform();
     }
 
-    protected void scrollToElement(By locator) {
-        WebElement element = wait.until(ExpectedConditions.presenceOfElementLocated(locator));
-        ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView({block: 'center'});", element);
+    protected void scrollToElement(WebElement element) {
+
         Actions actions = new Actions(driver);
-        actions.moveToElement(element).perform();
+
+        actions
+                .scrollToElement(element)
+                .perform();
     }
 
     protected String getText(By locator) {
-        return wait.until(ExpectedConditions.visibilityOfElementLocated(locator))
-                .getAttribute("textContent")
-                .trim();
+
+        return wait.until(
+                ExpectedConditions.visibilityOfElementLocated(locator)
+        ).getAttribute("textContent").trim();
     }
 
     protected void clickIfPresent(By locator) {
+
+        WebDriverWait shortWait =
+                new WebDriverWait(driver, Duration.ofSeconds(2));
+
         try {
-            WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(2));
-            WebElement element = shortWait.until(ExpectedConditions.elementToBeClickable(locator));
-            element.click();
-        } catch (Exception ignored) {
+
+            WebElement element = shortWait.until(
+                    ExpectedConditions.elementToBeClickable(locator)
+            );
+
+            scrollToElement(element);
+
+            new Actions(driver)
+                    .moveToElement(element)
+                    .click()
+                    .perform();
+
+        } catch (Exception ignored){
+        }
+    }
+
+    public void acceptCookies() {
+        try {
+            wait.until(ExpectedConditions.elementToBeClickable(cookieAcceptButton)).click();
+        } catch (Exception e) {
+            return;
         }
     }
 }

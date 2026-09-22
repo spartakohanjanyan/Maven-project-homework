@@ -1,63 +1,71 @@
-import business.JobsBusiness;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
+import basetest.BaseTest;
+import data.CompanyData;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import pages.HomePage;
-import pages.JobsPage;
+import pages.JobDetailsPage;
 
-public class JobsFiltersTest {
+import java.util.List;
 
-    private WebDriver driver;
-    private JobsPage jobsPage;
-    private JobsBusiness jobsBusiness;
-
-    @BeforeMethod
-    public void setUp() {
-        driver = new ChromeDriver();
-        driver.manage().window().maximize();
-
-        driver.get("https://staff.am");
-
-        HomePage homepage = new HomePage(driver);
-        homepage.clickJobsButton();
-
-        jobsPage = new JobsPage(driver);
-        jobsBusiness = new JobsBusiness(jobsPage);
-
-        ((JavascriptExecutor) driver).executeScript(
-                "var elem = document.querySelector('.Toastify') || document.querySelector('[class*=\"cookie\"]');" +
-                        "if(elem) { elem.remove(); }"
-        );
-    }
+public class JobsFiltersTest extends BaseTest {
 
     @DataProvider(name = "JobsFiltersData")
-    public Object[][] getCategoryFilterData() {
-        return new Object[][] {
-                {"Job category", "Banking/credit"},
-                {"Specialist level", "Junior"},
-                {"Job salary", "Mentioned"}
-        };
+    public Object[][] getFilterData() {
+
+        List<CompanyData> data =
+                CompanyData.getCompanyData();
+
+        Object[][] result =
+                new Object[data.size()][1];
+
+        for (int i = 0; i < data.size(); i++) {
+
+            result[i][0] = data.get(i);
+        }
+        return result;
     }
 
     @Test(dataProvider = "JobsFiltersData")
-    public void verifyFilterSelectionAndCount(String category, String filterName) {
-        jobsBusiness.applyFilter(category, filterName);
+    public void verifyFilterInFirstJob(CompanyData filterData) {
 
-        boolean isIconDisplayed = jobsBusiness.isFilterApplied(category, filterName);
-        Assert.assertTrue(
-                isIconDisplayed
+        JobDetailsPage jobDetailsPage = jobsBusiness.applyFilterAndOpenFirstJob(
+                filterData.getCategory(),
+                filterData.getFilterName()
         );
-    }
 
-    @AfterMethod
-    public void closeWebPage() {
-        if (driver != null) {
-            driver.quit();
+        String category = filterData.getCategory();
+        String expectedFilter = filterData.getFilterName().trim();
+
+        switch (category) {
+
+            case "Job category":
+                String actualCategory = jobDetailsPage.getCategory().trim();
+                Assert.assertEquals(
+                        actualCategory,
+                        expectedFilter,
+                        "Job Category does not match selected filter"
+                );
+                break;
+
+            case "Specialist level":
+                String actualCandidateLevel = jobDetailsPage.getCandidateLevel().trim();
+                Assert.assertEquals(
+                        actualCandidateLevel,
+                        expectedFilter,
+                        "Required candidate level does not match selected filter"
+                );
+                break;
+
+            case "Job salary":
+                String actualSalary = jobDetailsPage.getSalary().trim();
+                Assert.assertFalse(
+                        actualSalary.isEmpty(),
+                        "Salary field should not be empty for salary filter"
+                );
+                break;
+
+            default:
+                throw new IllegalArgumentException("Unsupported filter category: " + category);
         }
     }
 }
