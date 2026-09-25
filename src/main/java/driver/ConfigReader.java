@@ -8,26 +8,10 @@ public class ConfigReader {
     private static final Properties properties = new Properties();
 
     static {
-        try (InputStream inputStream =
-                     ConfigReader.class
-                             .getClassLoader()
-                             .getResourceAsStream("config.properties")) {
-
-            if (inputStream == null) {
-
-                throw new RuntimeException(
-                        "config.properties file not found"
-                );
-            }
-
+        try (InputStream inputStream = ConfigReader.class.getClassLoader().getResourceAsStream("config.properties")) {
             properties.load(inputStream);
-
         } catch (Exception e) {
-
-            throw new RuntimeException(
-                    "Cannot read config.properties",
-                    e
-            );
+            throw new RuntimeException("Cannot read config.properties", e);
         }
     }
 
@@ -36,12 +20,8 @@ public class ConfigReader {
         String value = properties.getProperty(key);
 
         if (value == null) {
-
-            throw new RuntimeException(
-                    "Property not found: " + key
-            );
+            throw new RuntimeException("Property not found: " + key);
         }
-
         return value.trim();
     }
 }

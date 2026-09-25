@@ -1,6 +1,5 @@
 package basetest;
 
-import business.JobsBusiness;
 import driver.ConfigReader;
 import driver.DriverFactory;
 import org.openqa.selenium.WebDriver;
@@ -16,28 +15,22 @@ public class BaseTest {
     protected HomePage homePage;
     protected JobsPage jobsPage;
 
-    protected JobsBusiness jobsBusiness;
-
     @BeforeMethod
     public void setUp() {
-
         driver = DriverFactory.createDriver();
 
-        driver.get(
-                ConfigReader.get("base.url")
-        );
+        driver.get(ConfigReader.get("base.url"));
 
         homePage = new HomePage(driver);
+        homePage.acceptCookies();
         jobsPage = homePage.clickJobsButton();
-
-        jobsBusiness = new JobsBusiness(jobsPage);
     }
 
     @AfterMethod
     public void tearDown() {
-
         if (driver != null) {
             driver.quit();
+            driver = null;
         }
     }
 }
