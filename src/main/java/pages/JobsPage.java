@@ -1,56 +1,66 @@
 package pages;
 
-import org.openqa.selenium.*;
+import base.BasePage;
+import enums.FilterGroupName;
+import org.openqa.selenium.By;
+import org.openqa.selenium.TimeoutException;
+import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
-import org.openqa.selenium.interactions.Actions;
-import java.time.Duration;
-import java.util.Random;
-import java.util.List;
 
-public class JobsPage {
-    private WebDriver driver;
-    private WebDriverWait wait;
-    private By jobsLoc = By.xpath(".//img[@alt='left-icon']/ancestor::div[3]");
-    private By expectedLocationLoc = By.xpath(".//img[contains(@src, 'location')]/following::div[@dir='auto']" +
-            "[contains(@style, 'color: rgb(115')][1]");
-    private By expectedJobTitleLoc = By.xpath(".//img[@alt='left-icon']/following::div[3]");
-    private By expectedCompanyNameLoc = By.xpath(".//a[contains(@href, '/company/')]//div[@dir='auto']");
-    private By expectedDateLoc = By.xpath(".//img[@alt='calendar-icon']/following::div[1]");
-    private By viewMoreBtnLoc = By.xpath(".//img[@alt='calendar-icon']/following::div[contains(text(),'View more')]");
+public class JobsPage extends BasePage {
+    private final By firstJobViewMoreLoc = By.xpath(
+            "(//img[@alt='calendar-icon'])[1]/following::div[contains(text(),'View more')][1]");
+
+    private final By firstJobTitleLoc = By.xpath(
+            "(//img[@alt='calendar-icon'])[1]/following::div[contains(text(),'View more')][1]");
 
     public JobsPage(WebDriver driver) {
-        this.driver = driver;
-        this.wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+        super(driver);
     }
 
-    public WebElement getRandomJobCard() {
-        List<WebElement> jobs = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(jobsLoc));
-        int index = new Random().nextInt(jobs.size());
-        return jobs.get(index);
+    private By getViewMoreLoc(FilterGroupName category) {
+        String xpath = String.format("//div[text()='%s']/following-sibling::div[@tabindex='0']",
+                category.getNameInJobsPage());
+        return By.xpath(xpath);
     }
 
-    public String getJobTitle(WebElement jobCard) {
-        return jobCard.findElement(expectedJobTitleLoc).getText().trim();
+    private By getFilterOptionLoc(FilterGroupName category, String filterName) {
+        String xpath = String.format("//div[text()='%s']/following-sibling::div[not(@tabindex='0')]//span[text()='%s']//span",
+                category.getNameInJobsPage(), filterName);
+        return By.xpath(xpath);
     }
 
-    public String getCompanyName(WebElement jobCard) {
-        return jobCard.findElement(expectedCompanyNameLoc).getText().trim();
+    private By getFilterCheckmarkLoc(FilterGroupName category, String filterName) {
+        String xpath = String.format("//div[text()='%s']/following-sibling::div[not(@tabindex='0')]//span[text()='%s']/ancestor::div[3]//img",
+                category.getNameInJobsPage(), filterName);
+        return By.xpath(xpath);
     }
 
-    public String getLocation(WebElement jobCard) {
-        return jobCard.findElement(expectedLocationLoc).getText().trim();
-    }
-    public String getDate(WebElement jobCard) {
-        return jobCard.findElement(expectedDateLoc).getText().trim();
+    public void filter(FilterGroupName category, String filterName) {
+        clickIfPresent(getViewMoreLoc(category));
+
+        By filterLocator = getFilterOptionLoc(category, filterName);
+        clickWithScroll(filterLocator);
+
+        By checkmarkLoc = getFilterCheckmarkLoc(category, filterName);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(checkmarkLoc));
     }
 
-    public void clickToJobDetails(WebElement jobCard) {
-        wait.until(ExpectedConditions.visibilityOf(jobCard));
-        WebElement viewMoreBtn = jobCard.findElement(viewMoreBtnLoc);
-        ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView({block: 'center'});", viewMoreBtn);
-        new Actions(driver).moveToElement(viewMoreBtn).perform();
-        wait.until(ExpectedConditions.elementToBeClickable(viewMoreBtn)).click();
-        wait.until(ExpectedConditions.not(ExpectedConditions.urlToBe("https://staff.am/jobs")));
+    public boolean isFilterChecked(FilterGroupName category, String filterName) {
+        By checkmarkLoc = getFilterCheckmarkLoc(category, filterName);
+
+        try {
+            wait.until(ExpectedConditions.visibilityOfElementLocated(checkmarkLoc));
+            return true;
+        } catch (TimeoutException e) {
+            return false;
+        }
+    }
+
+    public JobDetailsPage openFirstJob() {
+        wait.until(ExpectedConditions.refreshed(ExpectedConditions.elementToBeClickable(firstJobViewMoreLoc)));
+        clickWithScroll(firstJobViewMoreLoc);
+
+        return new JobDetailsPage(driver);
     }
 }

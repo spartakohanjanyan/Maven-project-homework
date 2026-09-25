@@ -1,39 +1,36 @@
 package pages;
 
+import base.BasePage;
+import enums.FilterGroupName;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
-import java.time.Duration;
 
-public class JobDetailsPage {
-    private WebDriver driver;
-    private WebDriverWait wait;
-
-    private By expectedLocation = By.xpath("//img[@alt='eyeIcon']/following::div[@dir='auto']");
-    private By expectedJobTitle = By.xpath("//h1[@role='heading']");
-    private By expectedCompanyName = By.xpath("//a[contains(@href, '/company/')]" +
-            "//div[@dir='auto' and contains(@style, 'font-weight: bold')] ");
-    private By expectedDate = By.xpath("//img[@alt='calendarGreen']/following::div[1]");
+public class JobDetailsPage extends BasePage {
 
     public JobDetailsPage(WebDriver driver) {
-        this.driver = driver;
-        this.wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+        super(driver);
     }
-    public String getJobTitle(){
-        return (wait.until(ExpectedConditions.visibilityOfElementLocated(expectedJobTitle))
-                .getAttribute("textContent").trim());
+
+    private By getDetailFieldLoc(FilterGroupName group) {
+        String xpath = String.format("//div[contains(text(),'%s')]/following::div[1]",
+                group.getNameInJobsDetailsPage());
+        return By.xpath(xpath);
     }
-    public String getCompanyName(){
-        return (wait.until(ExpectedConditions.visibilityOfElementLocated(expectedCompanyName))
-                .getAttribute("textContent").trim());
+
+    public String getFieldValue(FilterGroupName group) {
+        WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(getDetailFieldLoc(group)));
+        return element.getText();
     }
-    public String getLocation(){
-        return (wait.until(ExpectedConditions.visibilityOfElementLocated(expectedLocation))
-                .getAttribute("textContent").trim());
+
+    public String getCategory() {
+        return getFieldValue(FilterGroupName.JOB_CATEGORY);
     }
-    public String getDate(){
-        return (wait.until(ExpectedConditions.visibilityOfElementLocated(expectedDate))
-                .getAttribute("textContent").trim());
+    public String getCandidateLevel() {
+        return getFieldValue(FilterGroupName.SPECIALIST_LEVEL);
+    }
+    public String getSalary() {
+        return getFieldValue(FilterGroupName.JOB_SALARY);
     }
 }
