@@ -26,6 +26,8 @@ public class BaseTest {
         jobsPage = homePage.clickJobsButton();
     }
 
+    public WebDriver getDriver() {return driver;}
+
     @AfterMethod
     public void tearDown() {
         if (driver != null) {
