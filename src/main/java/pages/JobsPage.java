@@ -11,9 +11,6 @@ public class JobsPage extends BasePage {
     private final By firstJobViewMoreLoc = By.xpath(
             "(//img[@alt='calendar-icon'])[1]/following::div[contains(text(),'View more')][1]");
 
-    private final By firstJobTitleLoc = By.xpath(
-            "(//img[@alt='calendar-icon'])[1]/following::div[contains(text(),'View more')][1]");
-
     public JobsPage(WebDriver driver) {
         super(driver);
     }
@@ -37,13 +34,15 @@ public class JobsPage extends BasePage {
     }
 
     public void filter(FilterGroupName category, String filterName) {
-        clickIfPresent(getViewMoreLoc(category));
-
         By filterLocator = getFilterOptionLoc(category, filterName);
         clickWithScroll(filterLocator);
 
         By checkmarkLoc = getFilterCheckmarkLoc(category, filterName);
         wait.until(ExpectedConditions.visibilityOfElementLocated(checkmarkLoc));
+    }
+
+    public void clickViewMoreIfPresent(FilterGroupName category) {
+        clickIfPresent(getViewMoreLoc(category));
     }
 
     public boolean isFilterChecked(FilterGroupName category, String filterName) {
@@ -58,7 +57,7 @@ public class JobsPage extends BasePage {
     }
 
     public JobDetailsPage openFirstJob() {
-        wait.until(ExpectedConditions.refreshed(ExpectedConditions.elementToBeClickable(firstJobViewMoreLoc)));
+        wait.until(ExpectedConditions.elementToBeClickable(firstJobViewMoreLoc));
         clickWithScroll(firstJobViewMoreLoc);
 
         return new JobDetailsPage(driver);

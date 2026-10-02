@@ -2,25 +2,17 @@
 
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
 
-<suite name="Calculator Test Suite">
+<suite name="Staff Test Suite">
 
-    <test name="Calculator Tests">
+<listeners>
+    <listener class-name="listeners.TestListener"/>
+    <listener class-name="listeners.AnnotationTransformer"/>
+</listeners>
 
-        <groups>
-            <run>
-                <include name="smoke"/>
-                <include name="regression"/>
-                <include name="negative"/>
-            </run>
-        </groups>
-
-        <classes>
-            <class name="AdditionTest"/>
-            <class name="SubtractionTest"/>
-            <class name="MultiplicationTest"/>
-            <class name="DivisionTest"/>
-        </classes>
-
-    </test>
+<test name="Jobs Filters Tests">
+    <classes>
+        <class name="JobsFiltersTest"/>
+    </classes>
+</test>
 
 </suite>

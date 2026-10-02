@@ -9,6 +9,7 @@ import pages.JobDetailsPage;
 
 import java.util.List;
 
+
 public class JobsFiltersTest extends BaseTest {
 
     @DataProvider(name = "JobsFiltersData")
@@ -30,6 +31,7 @@ public class JobsFiltersTest extends BaseTest {
 
         FilterGroupName group = FilterGroupName.fromCategoryName(category);
 
+        jobsPage.clickViewMoreIfPresent(group);
         jobsPage.filter(group, filterName);
 
         boolean isChecked = jobsPage.isFilterChecked(group, filterName);
