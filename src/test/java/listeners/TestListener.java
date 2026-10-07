@@ -50,7 +50,7 @@ public class TestListener implements ITestListener {
         String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss_SSS").format(new Date());
         String fileName = methodName + "_" + timestamp + ".png";
 
-        File screenshotDir = new File("screenshots");
+        File screenshotDir = new File("target/screenshots");
         if (!screenshotDir.exists()) {
             screenshotDir.mkdirs();
         }
