@@ -3,6 +3,7 @@ package pages;
 import base.BasePage;
 import enums.FilterGroupName;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -57,7 +58,13 @@ public class JobsPage extends BasePage {
     }
 
     public JobDetailsPage openFirstJob() {
-        wait.until(ExpectedConditions.elementToBeClickable(firstJobViewMoreLoc));
+        wait.until(ExpectedConditions.visibilityOfElementLocated(firstJobViewMoreLoc));
+
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         clickWithScroll(firstJobViewMoreLoc);
 
         return new JobDetailsPage(driver);

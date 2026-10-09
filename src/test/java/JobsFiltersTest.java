@@ -2,13 +2,13 @@ import basetest.BaseTest;
 import data.CompanyData;
 import enums.FilterGroupName;
 import helpers.CompanyDataHelper;
+import io.qameta.allure.*;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import pages.JobDetailsPage;
 
 import java.util.List;
-
 
 public class JobsFiltersTest extends BaseTest {
 
@@ -22,23 +22,43 @@ public class JobsFiltersTest extends BaseTest {
         }
         return result;
     }
-
     @Test(dataProvider = "JobsFiltersData")
+
     public void verifyFilterInFirstJob(CompanyData filterData) {
 
         String category = filterData.getCategory();
         String filterName = filterData.getFilterName();
 
-        FilterGroupName group = FilterGroupName.fromCategoryName(category);
+        Allure.parameter("Filter category", category);
+        Allure.parameter("Filter name", filterName);
 
+        FilterGroupName group = FilterGroupName.fromCategoryName(category);
+        applyFilterStep(group, filterName);
+        verifyFilterIsCheckedStep(group, category, filterName);
+        JobDetailsPage jobDetailsPage = openFirstJobStep();
+        verifyJobDetailsStep(jobDetailsPage, group, category, filterName);
+    }
+
+    @Step("Expand and select filter '{filterName}' in group '{group}'")
+    private void applyFilterStep(FilterGroupName group, String filterName) {
         jobsPage.clickViewMoreIfPresent(group);
         jobsPage.filter(group, filterName);
+    }
 
+    @Step("Verify that the checkbox for '{filterName}' is displayed as checked")
+    private void verifyFilterIsCheckedStep(FilterGroupName group, String category, String filterName) {
         boolean isChecked = jobsPage.isFilterChecked(group, filterName);
         Assert.assertTrue(isChecked,
                 "Filter checkicon was not displayed for: " + category + " -> " + filterName);
+    }
 
-        JobDetailsPage jobDetailsPage = jobsPage.openFirstJob();
+    @Step("Open the first job offer from the filtered results list")
+    private JobDetailsPage openFirstJobStep() {
+        return jobsPage.openFirstJob();
+    }
+
+    @Step("Verify parameter matching on the job details page")
+    private void verifyJobDetailsStep(JobDetailsPage jobDetailsPage, FilterGroupName group, String category, String filterName) {
         String expectedFilter = filterName.trim();
 
         switch (group) {
