@@ -59,6 +59,12 @@ public class JobsPage extends BasePage {
 
     public JobDetailsPage openFirstJob() {
         wait.until(ExpectedConditions.visibilityOfElementLocated(firstJobViewMoreLoc));
+
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         clickWithScroll(firstJobViewMoreLoc);
 
         return new JobDetailsPage(driver);
