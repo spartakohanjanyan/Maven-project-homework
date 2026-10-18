@@ -1,124 +1,146 @@
 import dto.GorestDto;
 import io.restassured.RestAssured;
+import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-public class GorestTest {
-    private static final String TOKEN = "42e203ffadc4e7f15fea03dc3b74ac8823ede2b56abc04be5177510c2ba3c5ce";
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
 
-    private static int initialTotalUsers = 0;
-    private static int createdUserId = 0;
+public class GorestTest {
+
+    private static String TOKEN;
+    private static String BASE_URI;
+    private static RequestSpecification requestSpec;
 
     @BeforeClass
-    public void setup() {RestAssured.baseURI = "https://gorest.co.in/public/v1";}
+    public void setup() throws IOException {
+        Properties properties = new Properties();
+        FileInputStream fis = new FileInputStream("src/test/resources/config2.properties");
+        properties.load(fis);
+        fis.close();
 
-    @Test(priority = 1)
-    public void testGetAllUsersAndGetTotalCount() {
-        Response response = RestAssured
-                .given()
-                .when()
-                .get("/users")
-                .then()
-                .statusCode(200)
-                .extract()
-                .response();
+        BASE_URI = properties.getProperty("base.uri");
 
-        initialTotalUsers = response.jsonPath().getInt("meta.pagination.total");
-        System.out.println("Initial total users count: " + initialTotalUsers);
+        TOKEN = System.getenv("TOKEN") != null ? System.getenv("TOKEN") : properties.getProperty("token");
 
-        Assert.assertTrue(initialTotalUsers > 0, "Users count should be greater than zero");
+        requestSpec = new RequestSpecBuilder()
+                .setBaseUri(BASE_URI)
+                .setBasePath("/public/v1")
+                .addHeader("Authorization", "Bearer " + TOKEN)
+                .setContentType(ContentType.JSON)
+                .build();
     }
 
-    @Test(priority = 2, dependsOnMethods = "testGetAllUsersAndGetTotalCount")
-    public void testCreateUser() {
-        GorestDto newUser = new GorestDto();
-        newUser.setName("Spartak Ohanjanyan");
-        newUser.setEmail("spartakohanjanyan@gmail.com");
-        newUser.setGender("male");
-        newUser.setStatus("active");
-
-        Response response = RestAssured
+    @Test
+    public void verifyUserCreationRetrievalAndDeletion() {
+        Response usersBeforeCreation = RestAssured
                 .given()
-                .header("Authorization", "Bearer " + TOKEN)
-                .contentType(ContentType.JSON)
-                .body(newUser)
+                .spec(requestSpec)
                 .when()
-                .post("/users")
-                .then()
-                .statusCode(201)
-                .extract()
-                .response();
+                .get("/users");
 
-        GorestDto createdUser = response.jsonPath().getObject("data", GorestDto.class);
-        createdUserId = createdUser.getId();
+        Assert.assertEquals(usersBeforeCreation.getStatusCode(), 200);
 
-        System.out.println("Created user ID: " + createdUserId);
-        Assert.assertNotNull(createdUserId, "Created user ID should not be null");
-    }
+        int usersCountBeforeCreation = usersBeforeCreation
+                .jsonPath()
+                .getInt("meta.pagination.total");
 
-    @Test(priority = 3, dependsOnMethods = "testCreateUser")
-    public void testVerifyUserCountIncreased() {
-        Response response = RestAssured
+        System.out.println("Users before creation: " + usersCountBeforeCreation);
+
+        GorestDto userPayload = new GorestDto();
+
+        userPayload.setName("Spartak");
+        userPayload.setEmail("spartak" + System.currentTimeMillis() + "@gmail.com");
+        userPayload.setGender("male");
+        userPayload.setStatus("active");
+
+        Response userCreationResult = RestAssured
                 .given()
+                .spec(requestSpec)
+                .body(userPayload)
                 .when()
-                .get("/users")
-                .then()
-                .statusCode(200)
-                .extract()
-                .response();
+                .post("/users");
 
-        int newTotalUsers = response.jsonPath().getInt("meta.pagination.total");
-        System.out.println("Total users count after creation: " + newTotalUsers);
+        Assert.assertEquals(userCreationResult.getStatusCode(), 201);
 
-        boolean isCountIncreasedOrUserExists = (newTotalUsers == initialTotalUsers + 1) || (createdUserId > 0);
-        Assert.assertTrue(isCountIncreasedOrUserExists, "User should be successfully created");
-    }
+        GorestDto savedUser = userCreationResult
+                .jsonPath()
+                .getObject("data", GorestDto.class);
 
-    @Test(priority = 4, dependsOnMethods = "testVerifyUserCountIncreased")
-    public void testDeleteUser() {
-        RestAssured
+        Assert.assertNotNull(savedUser);
+
+        int savedUserId = savedUser.getId();
+
+        Assert.assertTrue(savedUserId > 0);
+
+        System.out.println("Created user ID: " + savedUserId);
+
+        Response userDetailsResult = RestAssured
                 .given()
-                .header("Authorization", "Bearer " + TOKEN)
+                .spec(requestSpec)
                 .when()
-                .delete("/users/" + createdUserId)
-                .then()
-                .statusCode(204);
+                .get("/users/" + savedUserId);
 
-        System.out.println("User successfully deleted with ID: " + createdUserId);
-    }
+        Assert.assertEquals(userDetailsResult.getStatusCode(), 200);
 
-    @Test(priority = 5, dependsOnMethods = "testDeleteUser")
-    public void testVerifyUserCountDecreased() {
-        Response response = RestAssured
+        System.out.println("User retrieved successfully.");
+
+        Response usersAfterCreation = RestAssured
                 .given()
+                .spec(requestSpec)
                 .when()
-                .get("/users")
-                .then()
-                .statusCode(200)
-                .extract()
-                .response();
+                .get("/users");
 
-        int finalTotalUsers = response.jsonPath().getInt("meta.pagination.total");
-        System.out.println("Total users count after deletion: " + finalTotalUsers);
+        Assert.assertEquals(usersAfterCreation.getStatusCode(), 200);
 
-        Assert.assertTrue(finalTotalUsers >= 0, "List fetched successfully");
-    }
+        int usersCountAfterCreation = usersAfterCreation
+                .jsonPath()
+                .getInt("meta.pagination.total");
 
-    @Test(priority = 6, dependsOnMethods = "testVerifyUserCountDecreased")
-    public void testGetDeletedUserReturnsNotFound() {
-        int statusCode = RestAssured
+        Assert.assertEquals(usersCountAfterCreation, usersCountBeforeCreation + 1, "User count should increase by one");
+
+        System.out.println("Users after creation: " + usersCountAfterCreation);
+
+        Response userDeletionResult = RestAssured
                 .given()
+                .spec(requestSpec)
                 .when()
-                .get("/users/" + createdUserId)
-                .then()
-                .extract()
-                .statusCode();
+                .delete("/users/" + savedUserId);
 
-        System.out.println("Status code when requesting deleted user: " + statusCode);
+        Assert.assertEquals(userDeletionResult.getStatusCode(), 204);
 
-        Assert.assertEquals(statusCode, 404, "Deleted user status code should be 404");
+        System.out.println("User deleted successfully.");
+
+        Response usersAfterDeletion = RestAssured
+                .given()
+                .spec(requestSpec)
+                .when()
+                .get("/users");
+
+        Assert.assertEquals(usersAfterDeletion.getStatusCode(), 200);
+
+        int usersCountAfterDeletion = usersAfterDeletion
+                .jsonPath()
+                .getInt("meta.pagination.total");
+
+        Assert.assertEquals(usersCountAfterDeletion, usersCountBeforeCreation, "User count should return to its initial value");
+
+        System.out.println("Users after deletion: " + usersCountAfterDeletion);
+
+        Response deletedUserLookupResult = RestAssured
+                .given()
+                .spec(requestSpec)
+                .when()
+                .get("/users/" + savedUserId);
+
+        Assert.assertEquals(deletedUserLookupResult.getStatusCode(), 404, "Deleted user should return 404");
+
+        System.out.println("User lifecycle test passed.");
     }
 }
