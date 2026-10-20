@@ -37,11 +37,7 @@ public class UserPostIntegrationTest {
             properties.load(fis);
         }
 
-        token = System.getenv("TOKEN");
-
-        if (token == null) {
-            token = properties.getProperty("token");
-        }
+        token = properties.getProperty("token");
 
         Assert.assertNotNull(token, "Token is missing");
         Assert.assertFalse(token.isBlank(), "Token is empty");
